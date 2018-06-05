@@ -1,23 +1,23 @@
 #include "include/simulator.h"
 
 Simulator::~Simulator() {
-  for (unsigned int i = 0; i < this->_gates.size(); i++) {
-    delete this->_gates[i];
+  for (unsigned int i = 0; i < this->gates_.size(); i++) {
+    delete this->gates_[i];
   }
 
-  for (unsigned int i = 0; i < this->_pins.size(); i++) {
-    delete this->_pins[i];
+  for (unsigned int i = 0; i < this->pins_.size(); i++) {
+    delete this->pins_[i];
   }
 }
 
-int Simulator::GetGatesAmount() const { return this->_gates.size(); }
+int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 
-int Simulator::GetPinsAmount() const { return this->_pins.size(); }
+int Simulator::GetPinsAmount() const { return this->pins_.size(); }
 
 Pin* Simulator::SearchPin(std::string name) const {
-  for (unsigned int i = 0; i < this->_pins.size(); i++) {
-    if (this->_pins[i]->GetName() == name) {
-      return this->_pins[i];
+  for (unsigned int i = 0; i < this->pins_.size(); i++) {
+    if (this->pins_[i]->GetName() == name) {
+      return this->pins_[i];
     }
   }
 
@@ -27,7 +27,7 @@ Pin* Simulator::SearchPin(std::string name) const {
 Pin* Simulator::AddPin(std::string name) {
   Pin* pin = new Pin(name);
 
-  this->_pins.push_back(pin);
+  this->pins_.push_back(pin);
   return pin;
 }
 
@@ -64,20 +64,20 @@ Gate* Simulator::AddGate(std::string type) {
     return gate;
   }
 
-  this->_gates.push_back(gate);
+  this->gates_.push_back(gate);
 
   return gate;
 }
 
 void Simulator::Print() const {
-  for (unsigned int i = 0; i < this->_pins.size(); i++) {
-    this->_pins[i]->Print();
+  for (unsigned int i = 0; i < this->pins_.size(); i++) {
+    this->pins_[i]->Print();
   }
 }
 
 void Simulator::Simulate() {
-  for (unsigned int i = 0; i < this->_gates.size(); i++) {
-    this->_gates[i]->Calculate();
+  for (unsigned int i = 0; i < this->gates_.size(); i++) {
+    this->gates_[i]->Calculate();
   }
 }
 
@@ -97,33 +97,41 @@ void Simulator::Load(std::string file) {
 
       fs >> name >> level;
       this->CheckPin(name)->SetLevel(level);
-    } else if (chunk == "PRINT") {
+      continue;
+    }
+
+    if (chunk == "PRINT") {
       std::string name;
 
       fs >> name;
       name == "ALL" ? this->Print() : this->CheckPin(name)->Print();
-    } else if (chunk == "SIM") {
-      this->Simulate();
-    } else {
-      Gate* gate = this->AddGate(chunk);
-      std::string in1, in2, out;
-
-      if (!gate) {
-        break;
-      }
-
-      if (chunk != "NOT") {
-        fs >> in1 >> in2 >> out;
-        gate->SetIn1(this->CheckPin(in1));
-        gate->SetIn2(this->CheckPin(in2));
-        gate->SetOut(this->CheckPin(out));
-      } else {
-        fs >> in1 >> out;
-        gate->SetIn1(this->CheckPin(in1));
-        gate->SetIn2(this->CheckPin(in1));
-        gate->SetOut(this->CheckPin(out));
-      }
+      continue;
     }
+
+    if (chunk == "SIM") {
+      this->Simulate();
+      continue;
+    }
+
+    Gate* gate = this->AddGate(chunk);
+    std::string in1, in2, out;
+
+    if (!gate) {
+      break;
+    }
+
+    if (chunk != "NOT") {
+      fs >> in1 >> in2 >> out;
+      gate->SetIn1(this->CheckPin(in1));
+      gate->SetIn2(this->CheckPin(in2));
+      gate->SetOut(this->CheckPin(out));
+      continue;
+    }
+
+    fs >> in1 >> out;
+    gate->SetIn1(this->CheckPin(in1));
+    gate->SetIn2(this->CheckPin(in1));
+    gate->SetOut(this->CheckPin(out));
   }
 
   fs.close();

@@ -19,9 +19,9 @@ class Gate {
   virtual void Calculate() = 0;
 
  protected:
-  Pin* _in1;
-  Pin* _in2;
-  Pin* _out;
+  Pin* in1_;
+  Pin* in2_;
+  Pin* out_;
 };
 
 #endif

@@ -1,20 +1,20 @@
 #include "include/pin.h"
 
-Pin::Pin() : _name("Undefined"), _level(0) {}
+Pin::Pin() : name_("Undefined"), level_(0) {}
 
-Pin::Pin(std::string name) : _name(name), _level(0) {}
+Pin::Pin(std::string name) : name_(name), level_(0) {}
 
-Pin::Pin(std::string name, Pin::level value) : _name(name), _level(value) {}
+Pin::Pin(std::string name, Pin::level value) : name_(name), level_(value) {}
 
-std::string Pin::GetName() const { return this->_name; }
+std::string Pin::GetName() const { return this->name_; }
 
-Pin::level Pin::GetLevel() const { return this->_level; }
+Pin::level Pin::GetLevel() const { return this->level_; }
 
-void Pin::SetName(std::string name) { this->_name = name; }
+void Pin::SetName(std::string name) { this->name_ = name; }
 
-void Pin::SetLevel(Pin::level level) { this->_level = level; }
+void Pin::SetLevel(Pin::level level) { this->level_ = level; }
 
 void Pin::Print() const {
-  std::cout << this->_name << " " << (this->_level == HIGH ? "HIGH" : "LOW")
+  std::cout << this->name_ << " " << (this->level_ == HIGH ? "HIGH" : "LOW")
             << std::endl;
 }

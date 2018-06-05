@@ -25,8 +25,8 @@ class Pin {
   void Print() const;
 
  private:
-  std::string _name;
-  Pin::level _level;
+  std::string name_;
+  Pin::level level_;
 };
 
 #endif

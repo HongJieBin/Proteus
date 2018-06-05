@@ -31,8 +31,8 @@ class Simulator {
   void Simulate();
 
  private:
-  std::vector<Gate*> _gates;
-  std::vector<Pin*> _pins;
+  std::vector<Gate*> gates_;
+  std::vector<Pin*> pins_;
 };
 
 #endif

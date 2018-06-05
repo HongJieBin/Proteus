@@ -1,12 +1,12 @@
 #include "include/NOT.h"
 
 void NOT::Calculate() {
-  Pin::level inLevel = this->_in1->GetLevel();
+  Pin::level inLevel = this->in1_->GetLevel();
 
   if (inLevel == HIGH) {
-    this->_out->SetLevel(LOW);
+    this->out_->SetLevel(LOW);
     return;
   }
 
-  this->_out->SetLevel(HIGH);
+  this->out_->SetLevel(HIGH);
 }
