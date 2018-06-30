@@ -1,6 +1,7 @@
 #ifndef PROTEUS_INCLUDE_SIMULATOR_H_
 #define PROTEUS_INCLUDE_SIMULATOR_H_
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -19,6 +20,7 @@ class Simulator {
   Simulator() = default;
   ~Simulator();
 
+  bool Empty() const;
   int GetGatesAmount() const;
   int GetPinsAmount() const;
 
@@ -26,8 +28,11 @@ class Simulator {
   Pin* AddPin(std::string name);
   Pin* CheckPin(std::string name);
   Gate* AddGate(std::string type);
+  void Info();
+  void Interact();
   void Load(std::string file);
   void Print() const;
+  void Clear();
   void Simulate();
 
  private:

@@ -1,13 +1,16 @@
 #include "include/simulator.h"
 
-Simulator::~Simulator() {
-  for (unsigned int i = 0; i < this->gates_.size(); i++) {
-    delete this->gates_[i];
-  }
+std::string toUpperCase(std::string str) {
+  std::string temp = str;
 
-  for (unsigned int i = 0; i < this->pins_.size(); i++) {
-    delete this->pins_[i];
-  }
+  std::transform(str.begin(), str.end(), temp.begin(), ::toupper);
+  return temp;
+}
+
+Simulator::~Simulator() { this->Clear(); }
+
+bool Simulator::Empty() const {
+  return !this->gates_.size() || !this->pins_.size();
 }
 
 int Simulator::GetGatesAmount() const { return this->gates_.size(); }
@@ -15,9 +18,9 @@ int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 int Simulator::GetPinsAmount() const { return this->pins_.size(); }
 
 Pin* Simulator::SearchPin(std::string name) const {
-  for (unsigned int i = 0; i < this->pins_.size(); i++) {
-    if (this->pins_[i]->GetName() == name) {
-      return this->pins_[i];
+  for (auto& iter : this->pins_) {
+    if (iter->GetName() == name) {
+      return iter;
     }
   }
 
@@ -59,8 +62,6 @@ Gate* Simulator::AddGate(std::string type) {
   else if (type == "XNOR")
     gate = new XNOR();
   else {
-    std::cout << "Error Loading Design" << std::endl;
-    std::cout << "Please refer to User Guide" << std::endl;
     return gate;
   }
 
@@ -69,16 +70,127 @@ Gate* Simulator::AddGate(std::string type) {
   return gate;
 }
 
-void Simulator::Print() const {
-  for (unsigned int i = 0; i < this->pins_.size(); i++) {
-    this->pins_[i]->Print();
-  }
+void Simulator::Info() {
+  std::cout << "Proteus - An application for simulating circuits" << std::endl;
+  std::cout << "Created by Jiahonzheng" << std::endl;
+  std::cout << "Enter 'help' to know more usage information" << std::endl;
 }
 
-void Simulator::Simulate() {
-  for (unsigned int i = 0; i < this->gates_.size(); i++) {
-    this->gates_[i]->Calculate();
-  }
+void Simulator::Interact() {
+  std::string temp;
+  std::string command;
+
+  do {
+    std::cout << "proteus> ";
+    std::cin >> temp;
+    command = toUpperCase(temp);
+
+    if (command == "EXIT") break;
+
+    if (command == "HELP") {
+      std::cout << "Usage: [options]" << std::endl << std::endl;
+      std::cout << "Proteus: An application for simulating logic circuits"
+                << std::endl
+                << std::endl;
+      std::cout << "Options:" << std::endl << std::endl;
+      std::cout << "\thelp\t\t\t\t\t\t\tOutput usage information" << std::endl;
+      std::cout << "\tclear\t\t\t\t\t\t\tClear the terminal screen"
+                << std::endl;
+      std::cout << "\texit\t\t\t\t\t\t\tExit the program" << std::endl;
+      std::cout << "\tload <file>\t\t\t\t\t\tLoad the existed circuit"
+                << std::endl;
+      std::cout << "\tadd <gate> <in_pin> [<in_pin>] <out_pin>\t\tAdd "
+                   "specified type of gate"
+                << std::endl;
+      std::cout << "\tprint <pin> | all\t\t\t\t\tPrint the specific pin or all "
+                   "the pins"
+                << std::endl;
+      std::cout << "\treset\t\t\t\t\t\t\tReset the circuit to empty state"
+                << std::endl;
+      std::cout << "\tsim\t\t\t\t\t\t\tSimulate the circuit" << std::endl;
+      std::cout << std::endl;
+      continue;
+    }
+
+    if (command == "SET") {
+      std::string name;
+      Pin::level level;
+
+      std::cin >> name >> level;
+      this->CheckPin(name)->SetLevel(level);
+      continue;
+    }
+
+    if (command == "PRINT") {
+      std::string name;
+
+      std::cin >> name;
+      toUpperCase(name) == "ALL" ? this->Print()
+                                 : this->CheckPin(name)->Print();
+      continue;
+    }
+
+    if (command == "SIM") {
+      this->Simulate();
+      continue;
+    }
+
+    if (command == "ADD") {
+      std::string name;
+      Gate* gate = nullptr;
+      std::string in1, in2, out;
+
+      std::cin >> name;
+      name = toUpperCase(name);
+      gate = this->AddGate(name);
+
+      if (!gate) {
+        std::cout << "Unsupported gate" << std::endl;
+        std::cin.clear();
+        std::cin.sync();
+        continue;
+      }
+
+      if (name != "NOT") {
+        std::cin >> in1 >> in2 >> out;
+        gate->SetIn1(this->CheckPin(in1));
+        gate->SetIn2(this->CheckPin(in2));
+        gate->SetOut(this->CheckPin(out));
+        continue;
+      }
+
+      std::cin >> in1 >> out;
+      gate->SetIn1(this->CheckPin(in1));
+      gate->SetIn2(this->CheckPin(in1));
+      gate->SetOut(this->CheckPin(out));
+      continue;
+    }
+
+    if (command == "RESET") {
+      if (this->Empty()) {
+        std::cout << "No pins or gates to clear" << std::endl;
+      }
+
+      this->Clear();
+      continue;
+    }
+
+    if (command == "CLEAR") {
+      system("cls");
+      continue;
+    }
+
+    if (command == "LOAD") {
+      std::string file;
+
+      std::cin >> file;
+      this->Load(file);
+      this->Clear();
+      continue;
+    }
+
+    std::cout << temp << ": command not found" << std::endl;
+  } while (1);
 }
 
 void Simulator::Load(std::string file) {
@@ -135,4 +247,35 @@ void Simulator::Load(std::string file) {
   }
 
   fs.close();
+}
+
+void Simulator::Print() const {
+  if (!this->pins_.size()) {
+    std::cout << "No pins or gates to clear" << std::endl;
+  }
+
+  for (auto& iter : this->pins_) {
+    iter->Print();
+  }
+}
+
+void Simulator::Clear() {
+  for (auto& iter : this->gates_) {
+    delete iter;
+  }
+
+  for (auto& iter : this->pins_) {
+    delete iter;
+  }
+
+  this->gates_.clear();
+  this->pins_.clear();
+}
+
+void Simulator::Simulate() {
+  for (auto& iter : this->gates_) {
+    iter->Calculate();
+  }
+
+  this->Print();
 }

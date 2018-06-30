@@ -1,10 +1,11 @@
 #include "include/simulator.h"
 
 int main() {
-  Simulator s;
+  Simulator proteus;
 
-  s.Load("test.txt");
-  getchar();
+  system("cls");
+  proteus.Info();
+  proteus.Interact();
 
   return 0;
 }
