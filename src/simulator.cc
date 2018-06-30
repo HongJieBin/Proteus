@@ -17,6 +17,10 @@ int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 
 int Simulator::GetPinsAmount() const { return this->pins_.size(); }
 
+bool Simulator::CheckSelfLoop(std::string pin1, std::string pin2) const {
+  return pin1 == pin2;
+}
+
 Pin* Simulator::SearchPin(std::string name) const {
   for (auto& iter : this->pins_) {
     if (iter->GetName() == name) {
@@ -153,6 +157,13 @@ void Simulator::Interact() {
 
       if (name != "NOT") {
         std::cin >> in1 >> in2 >> out;
+
+        if (this->CheckSelfLoop(in1, out) || this->CheckSelfLoop(in2, out)) {
+          std::string error =
+              "error: output cannot connect with input in the same gate";
+          throw(error);
+        }
+
         gate->SetIn1(this->CheckPin(in1));
         gate->SetIn2(this->CheckPin(in2));
         gate->SetOut(this->CheckPin(out));
@@ -160,6 +171,13 @@ void Simulator::Interact() {
       }
 
       std::cin >> in1 >> out;
+
+      if (this->CheckSelfLoop(in1, out)) {
+        std::string error =
+            "error: output cannot connect with input in the same gate";
+        throw(error);
+      }
+
       gate->SetIn1(this->CheckPin(in1));
       gate->SetIn2(this->CheckPin(in1));
       gate->SetOut(this->CheckPin(out));
@@ -184,7 +202,13 @@ void Simulator::Interact() {
       std::string file;
 
       std::cin >> file;
-      this->Load(file);
+
+      try {
+        this->Load(file);
+      } catch (const std::string error) {
+        std::cout << error << std::endl;
+      }
+
       this->Clear();
       continue;
     }
@@ -234,6 +258,13 @@ void Simulator::Load(std::string file) {
 
     if (chunk != "NOT") {
       fs >> in1 >> in2 >> out;
+
+      if (this->CheckSelfLoop(in1, out) || this->CheckSelfLoop(in2, out)) {
+        std::string error =
+            "error: output cannot connect with input in the same gate";
+        throw(error);
+      }
+
       gate->SetIn1(this->CheckPin(in1));
       gate->SetIn2(this->CheckPin(in2));
       gate->SetOut(this->CheckPin(out));
@@ -241,6 +272,13 @@ void Simulator::Load(std::string file) {
     }
 
     fs >> in1 >> out;
+
+    if (this->CheckSelfLoop(in1, out)) {
+      std::string error =
+          "error: output cannot connect with input in the same gate";
+      throw(error);
+    }
+
     gate->SetIn1(this->CheckPin(in1));
     gate->SetIn2(this->CheckPin(in1));
     gate->SetOut(this->CheckPin(out));

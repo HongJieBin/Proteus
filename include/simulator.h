@@ -24,10 +24,13 @@ class Simulator {
   int GetGatesAmount() const;
   int GetPinsAmount() const;
 
+  bool CheckSelfLoop(std::string pin1, std::string pin2) const;
+
   Pin* SearchPin(std::string name) const;
   Pin* AddPin(std::string name);
   Pin* CheckPin(std::string name);
   Gate* AddGate(std::string type);
+
   void Info();
   void Interact();
   void Load(std::string file);
