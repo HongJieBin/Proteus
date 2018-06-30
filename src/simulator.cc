@@ -1,4 +1,85 @@
 #include "include/simulator.h"
+#define CHECK_SIMPLE_LOOP_NOT(in1, out)                        \
+  if (this->CheckSimpleLoop(in1, out)) {                       \
+    std::string error =                                        \
+        "error: output cannot connect with input in the same " \
+        "gate\n\tNOT IN: " +                                   \
+        in1 + " OUT: " + out;                                  \
+    throw(error);                                              \
+  }
+#define CHECK_SIMPLE_LOOP(name, in1, in2, out)                              \
+  if (this->CheckSimpleLoop(in1, out) || this->CheckSimpleLoop(in2, out)) { \
+    std::string error =                                                     \
+        "error: output cannot connect with input in the same "              \
+        "gate\n\t" +                                                        \
+        name + " IN: " + in1 + " IN: " + in2 + " OUT: " + out;              \
+    throw(error);                                                           \
+  }
+#define COMMAND_ECHO(command, is)      \
+  if (command == "ECHO") {             \
+    std::string comment;               \
+                                       \
+    is >> comment;                     \
+    std::cout << comment << std::endl; \
+    continue;                          \
+  }
+#define COMMAND_PRINT(command, is)                              \
+  if (command == "PRINT") {                                     \
+    std::string name;                                           \
+                                                                \
+    is >> name;                                                 \
+    toUpperCase(name) == "ALL" ? this->Print()                  \
+                               : this->CheckPin(name)->Print(); \
+    continue;                                                   \
+  }
+#define COMMAND_ADD(name, is)              \
+  Gate* gate = this->AddGate(name);        \
+  std::string in1, in2, out;               \
+                                           \
+  if (!gate) {                             \
+    INSERTION                              \
+    break;                                 \
+  }                                        \
+                                           \
+  if (name != "NOT") {                     \
+    is >> in1 >> in2 >> out;               \
+                                           \
+    CHECK_SIMPLE_LOOP(name, in1, in2, out) \
+                                           \
+    gate->SetIn1(this->CheckPin(in1));     \
+    gate->SetIn2(this->CheckPin(in2));     \
+    gate->SetOut(this->CheckPin(out));     \
+    continue;                              \
+  }                                        \
+                                           \
+  is >> in1 >> out;                        \
+  CHECK_SIMPLE_LOOP_NOT(in1, out)          \
+  gate->SetIn1(this->CheckPin(in1));       \
+  gate->SetIn2(this->CheckPin(in1));       \
+  gate->SetOut(this->CheckPin(out));
+#define COMMAND_SET(command, is)           \
+  if (command == "SET") {                  \
+    std::string name;                      \
+    Pin::level level;                      \
+                                           \
+    is >> name >> level;                   \
+    this->CheckPin(name)->SetLevel(level); \
+    continue;                              \
+  }
+#define COMMAND_RESET(command)                               \
+  if (command == "RESET") {                                  \
+    if (this->Empty()) {                                     \
+      std::cout << "No pins or gates to clear" << std::endl; \
+    }                                                        \
+                                                             \
+    this->Clear();                                           \
+    continue;                                                \
+  }
+#define COMMAND_SIM(command) \
+  if (command == "SIM") {    \
+    this->Simulate();        \
+    continue;                \
+  }
 
 std::string toUpperCase(std::string str) {
   std::string temp = str;
@@ -17,7 +98,7 @@ int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 
 int Simulator::GetPinsAmount() const { return this->pins_.size(); }
 
-bool Simulator::CheckSelfLoop(std::string pin1, std::string pin2) const {
+bool Simulator::CheckSimpleLoop(std::string pin1, std::string pin2) const {
   return pin1 == pin2;
 }
 
@@ -70,7 +151,6 @@ Gate* Simulator::AddGate(std::string type) {
   }
 
   this->gates_.push_back(gate);
-
   return gate;
 }
 
@@ -81,6 +161,10 @@ void Simulator::Info() {
 }
 
 void Simulator::Interact() {
+#define INSERTION   \
+  std::cin.clear(); \
+  std::cin.sync();
+
   std::string temp;
   std::string command;
 
@@ -89,135 +173,77 @@ void Simulator::Interact() {
     std::cin >> temp;
     command = toUpperCase(temp);
 
-    if (command == "EXIT") break;
+    try {
+      if (command == "EXIT") break;
 
-    if (command == "HELP") {
-      std::cout << "Usage: [options]" << std::endl << std::endl;
-      std::cout << "Proteus: An application for simulating logic circuits"
-                << std::endl
-                << std::endl;
-      std::cout << "Options:" << std::endl << std::endl;
-      std::cout << "\thelp\t\t\t\t\t\t\tOutput usage information" << std::endl;
-      std::cout << "\tclear\t\t\t\t\t\t\tClear the terminal screen"
-                << std::endl;
-      std::cout << "\texit\t\t\t\t\t\t\tExit the program" << std::endl;
-      std::cout << "\tload <file>\t\t\t\t\t\tLoad the existed circuit"
-                << std::endl;
-      std::cout << "\tadd <gate> <in_pin> [<in_pin>] <out_pin>\t\tAdd "
-                   "specified type of gate"
-                << std::endl;
-      std::cout << "\tprint <pin> | all\t\t\t\t\tPrint the specific pin or all "
-                   "the pins"
-                << std::endl;
-      std::cout << "\treset\t\t\t\t\t\t\tReset the circuit to empty state"
-                << std::endl;
-      std::cout << "\tsim\t\t\t\t\t\t\tSimulate the circuit" << std::endl;
-      std::cout << std::endl;
-      continue;
-    }
-
-    if (command == "SET") {
-      std::string name;
-      Pin::level level;
-
-      std::cin >> name >> level;
-      this->CheckPin(name)->SetLevel(level);
-      continue;
-    }
-
-    if (command == "PRINT") {
-      std::string name;
-
-      std::cin >> name;
-      toUpperCase(name) == "ALL" ? this->Print()
-                                 : this->CheckPin(name)->Print();
-      continue;
-    }
-
-    if (command == "SIM") {
-      this->Simulate();
-      continue;
-    }
-
-    if (command == "ADD") {
-      std::string name;
-      Gate* gate = nullptr;
-      std::string in1, in2, out;
-
-      std::cin >> name;
-      name = toUpperCase(name);
-      gate = this->AddGate(name);
-
-      if (!gate) {
-        std::cout << "Unsupported gate" << std::endl;
-        std::cin.clear();
-        std::cin.sync();
+      if (command == "HELP") {
+        std::cout << "Usage: [options]" << std::endl << std::endl;
+        std::cout << "Proteus: An application for simulating logic circuits"
+                  << std::endl
+                  << std::endl;
+        std::cout << "Options:" << std::endl << std::endl;
+        std::cout << "\thelp\t\t\t\t\t\t\tOutput usage information"
+                  << std::endl;
+        std::cout << "\tclear\t\t\t\t\t\t\tClear the terminal screen"
+                  << std::endl;
+        std::cout << "\texit\t\t\t\t\t\t\tExit the program" << std::endl;
+        std::cout << "\tload <file>\t\t\t\t\t\tLoad the existed circuit"
+                  << std::endl;
+        std::cout << "\tadd <gate> <in_pin> [<in_pin>] <out_pin>\t\tAdd "
+                     "specified type of gate"
+                  << std::endl;
+        std::cout
+            << "\tprint <pin> | all\t\t\t\t\tPrint the specific pin or all "
+               "the pins"
+            << std::endl;
+        std::cout << "\treset\t\t\t\t\t\t\tReset the circuit to empty state"
+                  << std::endl;
+        std::cout << "\tsim\t\t\t\t\t\t\tSimulate the circuit" << std::endl;
+        std::cout << std::endl;
         continue;
       }
 
-      if (name != "NOT") {
-        std::cin >> in1 >> in2 >> out;
+      COMMAND_ECHO(command, std::cin)
+      COMMAND_PRINT(command, std::cin)
+      COMMAND_SET(command, std::cin)
+      COMMAND_RESET(command)
+      COMMAND_SIM(command)
 
-        if (this->CheckSelfLoop(in1, out) || this->CheckSelfLoop(in2, out)) {
-          std::string error =
-              "error: output cannot connect with input in the same gate";
-          throw(error);
-        }
+      if (command == "ADD") {
+        std::string name;
 
-        gate->SetIn1(this->CheckPin(in1));
-        gate->SetIn2(this->CheckPin(in2));
-        gate->SetOut(this->CheckPin(out));
+        std::cin >> name;
+        name = toUpperCase(name);
+
+        COMMAND_ADD(name, std::cin)
+      }
+
+      if (command == "CLEAR") {
+        system("cls");
         continue;
       }
 
-      std::cin >> in1 >> out;
+      if (command == "LOAD") {
+        std::string file;
 
-      if (this->CheckSelfLoop(in1, out)) {
-        std::string error =
-            "error: output cannot connect with input in the same gate";
-        throw(error);
-      }
-
-      gate->SetIn1(this->CheckPin(in1));
-      gate->SetIn2(this->CheckPin(in1));
-      gate->SetOut(this->CheckPin(out));
-      continue;
-    }
-
-    if (command == "RESET") {
-      if (this->Empty()) {
-        std::cout << "No pins or gates to clear" << std::endl;
-      }
-
-      this->Clear();
-      continue;
-    }
-
-    if (command == "CLEAR") {
-      system("cls");
-      continue;
-    }
-
-    if (command == "LOAD") {
-      std::string file;
-
-      std::cin >> file;
-
-      try {
+        std::cin >> file;
         this->Load(file);
-      } catch (const std::string error) {
-        std::cout << error << std::endl;
+        this->Clear();
+        continue;
       }
 
-      this->Clear();
-      continue;
+      throw(temp + ": command not found");
+    } catch (const std::string error) {
+      std::cout << error << std::endl;
     }
-
-    std::cout << temp << ": command not found" << std::endl;
   } while (1);
+
+#undef INSERTION
 }
 
 void Simulator::Load(std::string file) {
+#define INSERTION
+
   std::ifstream fs;
 
   fs.open(file);
@@ -228,72 +254,17 @@ void Simulator::Load(std::string file) {
     fs >> chunk;
     chunk = toUpperCase(chunk);
 
-    if (chunk == "SET") {
-      std::string name;
-      Pin::level level;
-
-      fs >> name >> level;
-      this->CheckPin(name)->SetLevel(level);
-      continue;
-    }
-
-    if (chunk == "PRINT") {
-      std::string name;
-
-      fs >> name;
-      name == "ALL" ? this->Print() : this->CheckPin(name)->Print();
-      continue;
-    }
-
-    if (chunk == "SIM") {
-      this->Simulate();
-      continue;
-    }
-
-    if (chunk == "ECHO") {
-      std::string comment;
-
-      fs >> comment;
-      std::cout << comment << std::endl;;
-      continue;
-    }
-
-    Gate* gate = this->AddGate(chunk);
-    std::string in1, in2, out;
-
-    if (!gate) {
-      break;
-    }
-
-    if (chunk != "NOT") {
-      fs >> in1 >> in2 >> out;
-
-      if (this->CheckSelfLoop(in1, out) || this->CheckSelfLoop(in2, out)) {
-        std::string error =
-            "error: output cannot connect with input in the same gate";
-        throw(error);
-      }
-
-      gate->SetIn1(this->CheckPin(in1));
-      gate->SetIn2(this->CheckPin(in2));
-      gate->SetOut(this->CheckPin(out));
-      continue;
-    }
-
-    fs >> in1 >> out;
-
-    if (this->CheckSelfLoop(in1, out)) {
-      std::string error =
-          "error: output cannot connect with input in the same gate";
-      throw(error);
-    }
-
-    gate->SetIn1(this->CheckPin(in1));
-    gate->SetIn2(this->CheckPin(in1));
-    gate->SetOut(this->CheckPin(out));
+    COMMAND_ECHO(chunk, fs)
+    COMMAND_PRINT(chunk, fs)
+    COMMAND_SET(chunk, fs)
+    COMMAND_RESET(chunk)
+    COMMAND_SIM(chunk)
+    COMMAND_ADD(chunk, fs)
   }
 
   fs.close();
+
+#undef INSERTION
 }
 
 void Simulator::Print() const {
@@ -323,6 +294,13 @@ void Simulator::Simulate() {
   for (auto& iter : this->gates_) {
     iter->Calculate();
   }
-
-  this->Print();
 }
+
+#undef CHECK_SIMPLE_LOOP_NOT
+#undef CHECK_SIMPLE_LOOP
+#undef COMMAND_ECHO
+#undef COMMAND_PRINT
+#undef COMMAND_ADD
+#undef COMMAND_SET
+#undef COMMAND_RESET
+#undef COMMAND_SIM
