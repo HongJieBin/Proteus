@@ -226,6 +226,7 @@ void Simulator::Load(std::string file) {
     std::string chunk;
 
     fs >> chunk;
+    chunk = toUpperCase(chunk);
 
     if (chunk == "SET") {
       std::string name;
@@ -246,6 +247,14 @@ void Simulator::Load(std::string file) {
 
     if (chunk == "SIM") {
       this->Simulate();
+      continue;
+    }
+
+    if (chunk == "ECHO") {
+      std::string comment;
+
+      fs >> comment;
+      std::cout << comment << std::endl;;
       continue;
     }
 
