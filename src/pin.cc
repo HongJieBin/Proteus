@@ -1,6 +1,6 @@
 #include "include/pin.h"
 
-Pin::Pin() : name_("Undefined"), level_(0) {}
+Pin::Pin() : name_(""), level_(0) {}
 
 Pin::Pin(std::string name) : name_(name), level_(0) {}
 

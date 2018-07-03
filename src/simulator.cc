@@ -1,4 +1,15 @@
 #include "include/simulator.h"
+#define CHECK_SET_OUT_AND_LOOP(gate, out, name)                          \
+  if (!this->CheckSetOut(out)) {                                         \
+    gate->SetOut(this->CheckPin(out));                                   \
+    if (this->CheckLoop(out, out)) {                                     \
+      throw(std::string("error: circuit cannot loop"));                               \
+    }                                                                    \
+  } else {                                                               \
+    std::string error = "error: output cannot connect with output\n\t" + \
+                        toUpperCase(name) + " pin: " + out;              \
+    throw(error);                                                        \
+  }
 #define CHECK_SIMPLE_LOOP_NOT(in1, out)                        \
   if (this->CheckSimpleLoop(in1, out)) {                       \
     std::string error =                                        \
@@ -32,45 +43,43 @@
                                : this->CheckPin(name)->Print(); \
     continue;                                                   \
   }
-#define COMMAND_ADD(command, is)             \
-  if (command == "ADD") {                    \
-    Gate* gate = nullptr;                    \
-    std::string name;                        \
-    std::string in1, in2, out;               \
-                                             \
-    is >> name;                              \
-    gate = this->AddGate(name);              \
-                                             \
-    if (!gate) {                             \
-      FLUSH_CACHE                            \
-      throw("Unsupported gate " + name);     \
-    }                                        \
-                                             \
-    if (toUpperCase(name) != "NOT") {        \
-      is >> in1 >> in2 >> out;               \
-                                             \
-      CHECK_SIMPLE_LOOP(name, in1, in2, out) \
-                                             \
-      gate->SetIn1(this->CheckPin(in1));     \
-      gate->SetIn2(this->CheckPin(in2));     \
-      gate->SetOut(this->CheckPin(out));     \
-      continue;                              \
-    }                                        \
-                                             \
-    is >> in1 >> out;                        \
-    CHECK_SIMPLE_LOOP_NOT(in1, out)          \
-    gate->SetIn1(this->CheckPin(in1));       \
-    gate->SetIn2(this->CheckPin(in1));       \
-    gate->SetOut(this->CheckPin(out));       \
+#define COMMAND_ADD(command, is)              \
+  if (command == "ADD") {                     \
+    Gate* gate = nullptr;                     \
+    std::string name;                         \
+    std::string in1, in2, out;                \
+                                              \
+    is >> name;                               \
+    gate = this->AddGate(name);               \
+                                              \
+    if (!gate) {                              \
+      throw("Unsupported gate " + name);      \
+    }                                         \
+                                              \
+    if (toUpperCase(name) != "NOT") {         \
+      is >> in1 >> in2 >> out;                \
+      CHECK_SIMPLE_LOOP(name, in1, in2, out)  \
+      gate->SetIn1(this->CheckPin(in1));      \
+      gate->SetIn2(this->CheckPin(in2));      \
+      CHECK_SET_OUT_AND_LOOP(gate, out, name) \
+      continue;                               \
+    }                                         \
+                                              \
+    is >> in1 >> out;                         \
+    CHECK_SIMPLE_LOOP_NOT(in1, out)           \
+    gate->SetIn1(this->CheckPin(in1));        \
+    gate->SetIn2(this->CheckPin(in1));        \
+    CHECK_SET_OUT_AND_LOOP(gate, out, name)   \
+    continue;                                 \
   }
-#define COMMAND_SET(command, is)                        \
-  if (command == "SET") {                               \
-    std::string name;                                   \
-    Pin::level level;                                   \
-                                                        \
-    is >> name >> level;                                \
+#define COMMAND_SET(command, is)           \
+  if (command == "SET") {                  \
+    std::string name;                      \
+    Pin::level level;                      \
+                                           \
+    is >> name >> level;                   \
     this->CheckPin(name)->SetLevel(level); \
-    continue;                                           \
+    continue;                              \
   }
 #define COMMAND_RESET(command)                         \
   if (command == "RESET") {                            \
@@ -104,6 +113,16 @@ int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 
 int Simulator::GetPinsAmount() const { return this->pins_.size(); }
 
+bool Simulator::CheckSetOut(std::string pin) const {
+  for (auto& iter : this->gates_) {
+    if (iter->GetOut() && pin == iter->GetOut()->GetName()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool Simulator::CheckSimpleLoop(std::string pin1, std::string pin2) const {
   return pin1 == pin2;
 }
@@ -116,6 +135,28 @@ Pin* Simulator::SearchPin(std::string name) const {
   }
 
   return nullptr;
+}
+
+bool Simulator::CheckLoop(std::string in, std::string out) const {
+  bool connected = false;
+
+  for (auto& iter : this->gates_) {
+    if (!iter->GetIn1() || !iter->GetIn2() || !iter->GetOut()) {
+      continue;
+    }
+
+    if (in == iter->GetIn1()->GetName() || in == iter->GetIn2()->GetName()) {
+      connected = true;
+
+      if (out == iter->GetOut()->GetName()) {
+        return true;
+      }
+
+      this->CheckLoop(iter->GetOut()->GetName(), out);
+    }
+  }
+
+  return connected;
 }
 
 Pin* Simulator::AddPin(std::string name) {
@@ -169,10 +210,6 @@ void Simulator::Info() {
 }
 
 void Simulator::Interact() {
-#define FLUSH_CACHE \
-  std::cin.clear(); \
-  std::cin.sync();
-
   std::string temp;
   std::string command;
 
@@ -182,7 +219,10 @@ void Simulator::Interact() {
     command = toUpperCase(temp);
 
     try {
-      if (command == "EXIT") break;
+      if (command == "EXIT") {
+        this->Clear();
+        break;
+      }
 
       if (command == "HELP") {
         std::cout << "Usage: [options]" << std::endl << std::endl;
@@ -234,16 +274,15 @@ void Simulator::Interact() {
 
       throw(temp + ": command not found");
     } catch (const std::string error) {
+      this->Clear();
       std::cout << error << std::endl;
+      std::cin.clear();
+      std::cin.sync();
     }
   } while (1);
-
-#undef FLUSH_CACHE
 }
 
 void Simulator::Load(std::string file) {
-#define FLUSH_CACHE
-
   std::ifstream fs;
 
   fs.open(file);
@@ -268,8 +307,6 @@ void Simulator::Load(std::string file) {
   }
 
   fs.close();
-
-#undef FLUSH_CACHE
 }
 
 void Simulator::Print() const {
@@ -301,6 +338,7 @@ void Simulator::Simulate() {
   }
 }
 
+#undef CHECK_SET_OUT_AND_LOOP
 #undef CHECK_SIMPLE_LOOP_NOT
 #undef CHECK_SIMPLE_LOOP
 #undef COMMAND_ECHO
