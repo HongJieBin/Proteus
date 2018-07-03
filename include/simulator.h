@@ -24,7 +24,7 @@ class Simulator {
   int GetGatesAmount() const;
   int GetPinsAmount() const;
 
-  bool CheckSetOut(std::string pin) const;
+  bool CheckOut(std::string pin) const;
   bool CheckSimpleLoop(std::string pin1, std::string pin2) const;
   bool CheckLoop(std::string in, std::string out) const;
 

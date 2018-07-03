@@ -1,9 +1,9 @@
 #include "include/simulator.h"
 #define CHECK_SET_OUT_AND_LOOP(gate, out, name)                          \
-  if (!this->CheckSetOut(out)) {                                         \
+  if (!this->CheckOut(out)) {                                            \
     gate->SetOut(this->CheckPin(out));                                   \
     if (this->CheckLoop(out, out)) {                                     \
-      throw(std::string("error: circuit cannot loop"));                               \
+      throw(std::string("error: circuit cannot contain a loop"));        \
     }                                                                    \
   } else {                                                               \
     std::string error = "error: output cannot connect with output\n\t" + \
@@ -72,14 +72,22 @@
     CHECK_SET_OUT_AND_LOOP(gate, out, name)   \
     continue;                                 \
   }
-#define COMMAND_SET(command, is)           \
-  if (command == "SET") {                  \
-    std::string name;                      \
-    Pin::level level;                      \
-                                           \
-    is >> name >> level;                   \
-    this->CheckPin(name)->SetLevel(level); \
-    continue;                              \
+#define COMMAND_SET(command, is)                                      \
+  if (command == "SET") {                                             \
+    std::string name;                                                 \
+    Pin::level level;                                                 \
+                                                                      \
+    is >> name >> level;                                              \
+                                                                      \
+    if (!this->CheckOut(name)) {                                      \
+      this->CheckPin(name)->SetLevel(level);                          \
+    } else {                                                          \
+      std::string error =                                             \
+          "error: output cannot be set\n\t" + name + " cannot be set"; \
+      throw(error);                                                   \
+    }                                                                 \
+                                                                      \
+    continue;                                                         \
   }
 #define COMMAND_RESET(command)                         \
   if (command == "RESET") {                            \
@@ -113,9 +121,13 @@ int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 
 int Simulator::GetPinsAmount() const { return this->pins_.size(); }
 
-bool Simulator::CheckSetOut(std::string pin) const {
+bool Simulator::CheckOut(std::string pin) const {
   for (auto& iter : this->gates_) {
-    if (iter->GetOut() && pin == iter->GetOut()->GetName()) {
+    if (!iter->GetOut()) {
+      continue;
+    }
+
+    if (pin == iter->GetOut()->GetName()) {
       return true;
     }
   }
