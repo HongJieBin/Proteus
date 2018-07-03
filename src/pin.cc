@@ -18,3 +18,36 @@ void Pin::Print() const {
   std::cout << this->name_ << " " << (this->level_ == HIGH ? "HIGH" : "LOW")
             << std::endl;
 }
+
+int Pin::operator+(const Pin& other) const {
+  if (this->GetLevel() || other.GetLevel()) {
+    return HIGH;
+  }
+
+  return LOW;
+}
+
+int Pin::operator*(const Pin& other) const {
+  if (this->GetLevel() && other.GetLevel()) {
+    return HIGH;
+  }
+
+  return LOW;
+}
+
+int Pin::operator!() const {
+  if (this->GetLevel()) {
+    return LOW;
+  }
+
+  return HIGH;
+}
+
+int Pin::operator^(const Pin& other) const {
+  if ((this->GetLevel() == HIGH && other.GetLevel() == LOW) ||
+      (this->GetLevel() == LOW && other.GetLevel() == HIGH)) {
+    return HIGH;
+  }
+
+  return LOW;
+}

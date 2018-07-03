@@ -24,6 +24,11 @@ class Pin {
 
   void Print() const;
 
+  int operator+(const Pin& other) const;
+  int operator*(const Pin& other) const;
+  int operator!() const;
+  int operator^(const Pin& other) const;
+
  private:
   std::string name_;
   Pin::level level_;
