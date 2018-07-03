@@ -3,8 +3,8 @@
   if (this->CheckSimpleLoop(in1, out)) {                       \
     std::string error =                                        \
         "error: output cannot connect with input in the same " \
-        "gate\n\tNOT IN: " +                                   \
-        in1 + " OUT: " + out;                                  \
+        "gate\n\tNOT in: " +                                   \
+        in1 + " out: " + out;                                  \
     throw(error);                                              \
   }
 #define CHECK_SIMPLE_LOOP(name, in1, in2, out)                              \
@@ -12,7 +12,7 @@
     std::string error =                                                     \
         "error: output cannot connect with input in the same "              \
         "gate\n\t" +                                                        \
-        name + " IN: " + in1 + " IN: " + in2 + " OUT: " + out;              \
+        toUpperCase(name) + " in: " + in1 + " in: " + in2 + " out: " + out; \
     throw(error);                                                           \
   }
 #define COMMAND_ECHO(command, is)      \
@@ -46,9 +46,7 @@
       throw("Unsupported gate " + name);     \
     }                                        \
                                              \
-    name = toUpperCase(name);                \
-                                             \
-    if (name != "NOT") {                     \
+    if (toUpperCase(name) != "NOT") {        \
       is >> in1 >> in2 >> out;               \
                                              \
       CHECK_SIMPLE_LOOP(name, in1, in2, out) \
@@ -65,14 +63,14 @@
     gate->SetIn2(this->CheckPin(in1));       \
     gate->SetOut(this->CheckPin(out));       \
   }
-#define COMMAND_SET(command, is)           \
-  if (command == "SET") {                  \
-    std::string name;                      \
-    Pin::level level;                      \
-                                           \
-    is >> name >> level;                   \
+#define COMMAND_SET(command, is)                        \
+  if (command == "SET") {                               \
+    std::string name;                                   \
+    Pin::level level;                                   \
+                                                        \
+    is >> name >> level;                                \
     this->CheckPin(name)->SetLevel(level); \
-    continue;                              \
+    continue;                                           \
   }
 #define COMMAND_RESET(command)                         \
   if (command == "RESET") {                            \
