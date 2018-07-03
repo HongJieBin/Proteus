@@ -32,31 +32,39 @@
                                : this->CheckPin(name)->Print(); \
     continue;                                                   \
   }
-#define COMMAND_ADD(name, is)              \
-  Gate* gate = this->AddGate(name);        \
-  std::string in1, in2, out;               \
-                                           \
-  if (!gate) {                             \
-    INSERTION                              \
-    break;                                 \
-  }                                        \
-                                           \
-  if (name != "NOT") {                     \
-    is >> in1 >> in2 >> out;               \
-                                           \
-    CHECK_SIMPLE_LOOP(name, in1, in2, out) \
-                                           \
-    gate->SetIn1(this->CheckPin(in1));     \
-    gate->SetIn2(this->CheckPin(in2));     \
-    gate->SetOut(this->CheckPin(out));     \
-    continue;                              \
-  }                                        \
-                                           \
-  is >> in1 >> out;                        \
-  CHECK_SIMPLE_LOOP_NOT(in1, out)          \
-  gate->SetIn1(this->CheckPin(in1));       \
-  gate->SetIn2(this->CheckPin(in1));       \
-  gate->SetOut(this->CheckPin(out));
+#define COMMAND_ADD(command, is)             \
+  if (command == "ADD") {                    \
+    Gate* gate = nullptr;                    \
+    std::string name;                        \
+    std::string in1, in2, out;               \
+                                             \
+    is >> name;                              \
+    gate = this->AddGate(name);              \
+                                             \
+    if (!gate) {                             \
+      FLUSH_CACHE                            \
+      throw("Unsupported gate " + name);     \
+    }                                        \
+                                             \
+    name = toUpperCase(name);                \
+                                             \
+    if (name != "NOT") {                     \
+      is >> in1 >> in2 >> out;               \
+                                             \
+      CHECK_SIMPLE_LOOP(name, in1, in2, out) \
+                                             \
+      gate->SetIn1(this->CheckPin(in1));     \
+      gate->SetIn2(this->CheckPin(in2));     \
+      gate->SetOut(this->CheckPin(out));     \
+      continue;                              \
+    }                                        \
+                                             \
+    is >> in1 >> out;                        \
+    CHECK_SIMPLE_LOOP_NOT(in1, out)          \
+    gate->SetIn1(this->CheckPin(in1));       \
+    gate->SetIn2(this->CheckPin(in1));       \
+    gate->SetOut(this->CheckPin(out));       \
+  }
 #define COMMAND_SET(command, is)           \
   if (command == "SET") {                  \
     std::string name;                      \
@@ -66,14 +74,14 @@
     this->CheckPin(name)->SetLevel(level); \
     continue;                              \
   }
-#define COMMAND_RESET(command)                               \
-  if (command == "RESET") {                                  \
-    if (this->Empty()) {                                     \
-      std::cout << "No pins or gates to clear" << std::endl; \
-    }                                                        \
-                                                             \
-    this->Clear();                                           \
-    continue;                                                \
+#define COMMAND_RESET(command)                         \
+  if (command == "RESET") {                            \
+    if (this->Empty()) {                               \
+      throw(std::string("No pins or gates to clear")); \
+    }                                                  \
+                                                       \
+    this->Clear();                                     \
+    continue;                                          \
   }
 #define COMMAND_SIM(command) \
   if (command == "SIM") {    \
@@ -132,6 +140,8 @@ Pin* Simulator::CheckPin(std::string name) {
 Gate* Simulator::AddGate(std::string type) {
   Gate* gate = nullptr;
 
+  type = toUpperCase(type);
+
   if (type == "NOT")
     gate = new NOT();
   else if (type == "AND")
@@ -161,7 +171,7 @@ void Simulator::Info() {
 }
 
 void Simulator::Interact() {
-#define INSERTION   \
+#define FLUSH_CACHE \
   std::cin.clear(); \
   std::cin.sync();
 
@@ -208,15 +218,7 @@ void Simulator::Interact() {
       COMMAND_SET(command, std::cin)
       COMMAND_RESET(command)
       COMMAND_SIM(command)
-
-      if (command == "ADD") {
-        std::string name;
-
-        std::cin >> name;
-        name = toUpperCase(name);
-
-        COMMAND_ADD(name, std::cin)
-      }
+      COMMAND_ADD(command, std::cin)
 
       if (command == "CLEAR") {
         system("cls");
@@ -238,11 +240,11 @@ void Simulator::Interact() {
     }
   } while (1);
 
-#undef INSERTION
+#undef FLUSH_CACHE
 }
 
 void Simulator::Load(std::string file) {
-#define INSERTION
+#define FLUSH_CACHE
 
   std::ifstream fs;
 
@@ -254,22 +256,27 @@ void Simulator::Load(std::string file) {
     fs >> chunk;
     chunk = toUpperCase(chunk);
 
-    COMMAND_ECHO(chunk, fs)
-    COMMAND_PRINT(chunk, fs)
-    COMMAND_SET(chunk, fs)
-    COMMAND_RESET(chunk)
-    COMMAND_SIM(chunk)
-    COMMAND_ADD(chunk, fs)
+    try {
+      COMMAND_ECHO(chunk, fs)
+      COMMAND_PRINT(chunk, fs)
+      COMMAND_SET(chunk, fs)
+      COMMAND_RESET(chunk)
+      COMMAND_SIM(chunk)
+      COMMAND_ADD(chunk, fs)
+    } catch (std::string error) {
+      std::cout << error << std::endl;
+      break;
+    }
   }
 
   fs.close();
 
-#undef INSERTION
+#undef FLUSH_CACHE
 }
 
 void Simulator::Print() const {
   if (!this->pins_.size()) {
-    std::cout << "No pins or gates to clear" << std::endl;
+    throw(std::string("No pins or gates to clear"));
   }
 
   for (auto& iter : this->pins_) {
