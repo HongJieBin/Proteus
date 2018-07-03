@@ -1,4 +1,4 @@
-AND A B C
+ADD AX A B C
 ECHO Case_A=0_B=0
 SET A 0
 SET B 0
