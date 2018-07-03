@@ -1,7 +1,14 @@
 #include "include/simulator.h"
+#define CHECK_PIN_NAME(name)                                        \
+  if (name == "all" || name == "ALL") {                             \
+    throw(std::string(                                              \
+        "error: cannot use reserved word as the name of the pin")); \
+  }
+
 #define CHECK_SET_OUT_AND_LOOP(gate, out, name)                          \
   if (!this->CheckOut(out)) {                                            \
     gate->SetOut(this->CheckPin(out));                                   \
+                                                                         \
     if (this->CheckLoop(out, out)) {                                     \
       throw(std::string("error: circuit cannot contain a loop"));        \
     }                                                                    \
@@ -10,6 +17,7 @@
                         toUpperCase(name) + " pin: " + out;              \
     throw(error);                                                        \
   }
+
 #define CHECK_SIMPLE_LOOP_NOT(in1, out)                        \
   if (this->CheckSimpleLoop(in1, out)) {                       \
     std::string error =                                        \
@@ -18,6 +26,7 @@
         in1 + " out: " + out;                                  \
     throw(error);                                              \
   }
+
 #define CHECK_SIMPLE_LOOP(name, in1, in2, out)                              \
   if (this->CheckSimpleLoop(in1, out) || this->CheckSimpleLoop(in2, out)) { \
     std::string error =                                                     \
@@ -26,6 +35,7 @@
         toUpperCase(name) + " in: " + in1 + " in: " + in2 + " out: " + out; \
     throw(error);                                                           \
   }
+
 #define COMMAND_ECHO(command, is)      \
   if (command == "ECHO") {             \
     std::string comment;               \
@@ -34,13 +44,14 @@
     std::cout << comment << std::endl; \
     continue;                          \
   }
+
 #define COMMAND_PRINT(command, is)                                         \
   if (command == "PRINT") {                                                \
     std::string name;                                                      \
                                                                            \
     is >> name;                                                            \
                                                                            \
-    if (!this->SearchPin(name)) {                                          \
+    if ((name != "ALL" && name != "all") && !this->SearchPin(name)) {      \
       std::string error =                                                  \
           "error: such pin does not exist\n\t" + name + " does not exist"; \
       throw(error);                                                        \
@@ -50,6 +61,7 @@
                                : this->CheckPin(name)->Print();            \
     continue;                                                              \
   }
+
 #define COMMAND_ADD(command, is)              \
   if (command == "ADD") {                     \
     Gate* gate = nullptr;                     \
@@ -65,6 +77,9 @@
                                               \
     if (toUpperCase(name) != "NOT") {         \
       is >> in1 >> in2 >> out;                \
+      CHECK_PIN_NAME(in1)                     \
+      CHECK_PIN_NAME(in2)                     \
+      CHECK_PIN_NAME(out)                     \
       CHECK_SIMPLE_LOOP(name, in1, in2, out)  \
       gate->SetIn1(this->CheckPin(in1));      \
       gate->SetIn2(this->CheckPin(in2));      \
@@ -73,29 +88,39 @@
     }                                         \
                                               \
     is >> in1 >> out;                         \
+    CHECK_PIN_NAME(in1)                       \
+    CHECK_PIN_NAME(out)                       \
     CHECK_SIMPLE_LOOP_NOT(in1, out)           \
     gate->SetIn1(this->CheckPin(in1));        \
     gate->SetIn2(this->CheckPin(in1));        \
     CHECK_SET_OUT_AND_LOOP(gate, out, name)   \
     continue;                                 \
   }
-#define COMMAND_SET(command, is)                                       \
-  if (command == "SET") {                                              \
-    std::string name;                                                  \
-    Pin::level level;                                                  \
-                                                                       \
-    is >> name >> level;                                               \
-                                                                       \
-    if (!this->CheckOut(name)) {                                       \
-      this->CheckPin(name)->SetLevel(level);                           \
-    } else {                                                           \
-      std::string error =                                              \
-          "error: output cannot be set\n\t" + name + " cannot be set"; \
-      throw(error);                                                    \
-    }                                                                  \
-                                                                       \
-    continue;                                                          \
+
+#define COMMAND_SET(command, is)                                          \
+  if (command == "SET") {                                                 \
+    std::string name;                                                     \
+    Pin::level level;                                                     \
+                                                                          \
+    is >> name >> level;                                                  \
+                                                                          \
+    if (!this->CheckOut(name)) {                                          \
+      if (!this->CheckLevel(level)) {                                     \
+        this->CheckPin(name)->SetLevel(level);                            \
+      } else {                                                            \
+        std::string error =                                               \
+            "error: level must be 0 or 1\n\t" + name + " must be 0 or 1"; \
+        throw(error);                                                     \
+      }                                                                   \
+    } else {                                                              \
+      std::string error =                                                 \
+          "error: output cannot be set\n\t" + name + " cannot be set";    \
+      throw(error);                                                       \
+    }                                                                     \
+                                                                          \
+    continue;                                                             \
   }
+
 #define COMMAND_RESET(command)                         \
   if (command == "RESET") {                            \
     if (this->Empty()) {                               \
@@ -105,6 +130,7 @@
     this->Clear();                                     \
     continue;                                          \
   }
+
 #define COMMAND_SIM(command) \
   if (command == "SIM") {    \
     this->Simulate();        \
@@ -127,6 +153,10 @@ bool Simulator::Empty() const {
 int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 
 int Simulator::GetPinsAmount() const { return this->pins_.size(); }
+
+bool Simulator::CheckLevel(Pin::level level) const {
+  return level != 0 && level != 1;
+}
 
 bool Simulator::CheckOut(std::string pin) const {
   for (auto& iter : this->gates_) {
@@ -357,6 +387,7 @@ void Simulator::Simulate() {
   }
 }
 
+#undef CHECK_PIN_NAME
 #undef CHECK_SET_OUT_AND_LOOP
 #undef CHECK_SIMPLE_LOOP_NOT
 #undef CHECK_SIMPLE_LOOP
