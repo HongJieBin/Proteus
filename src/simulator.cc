@@ -34,14 +34,21 @@
     std::cout << comment << std::endl; \
     continue;                          \
   }
-#define COMMAND_PRINT(command, is)                              \
-  if (command == "PRINT") {                                     \
-    std::string name;                                           \
-                                                                \
-    is >> name;                                                 \
-    toUpperCase(name) == "ALL" ? this->Print()                  \
-                               : this->CheckPin(name)->Print(); \
-    continue;                                                   \
+#define COMMAND_PRINT(command, is)                                         \
+  if (command == "PRINT") {                                                \
+    std::string name;                                                      \
+                                                                           \
+    is >> name;                                                            \
+                                                                           \
+    if (!this->SearchPin(name)) {                                          \
+      std::string error =                                                  \
+          "error: such pin does not exist\n\t" + name + " does not exist"; \
+      throw(error);                                                        \
+    }                                                                      \
+                                                                           \
+    toUpperCase(name) == "ALL" ? this->Print()                             \
+                               : this->CheckPin(name)->Print();            \
+    continue;                                                              \
   }
 #define COMMAND_ADD(command, is)              \
   if (command == "ADD") {                     \
@@ -72,22 +79,22 @@
     CHECK_SET_OUT_AND_LOOP(gate, out, name)   \
     continue;                                 \
   }
-#define COMMAND_SET(command, is)                                      \
-  if (command == "SET") {                                             \
-    std::string name;                                                 \
-    Pin::level level;                                                 \
-                                                                      \
-    is >> name >> level;                                              \
-                                                                      \
-    if (!this->CheckOut(name)) {                                      \
-      this->CheckPin(name)->SetLevel(level);                          \
-    } else {                                                          \
-      std::string error =                                             \
+#define COMMAND_SET(command, is)                                       \
+  if (command == "SET") {                                              \
+    std::string name;                                                  \
+    Pin::level level;                                                  \
+                                                                       \
+    is >> name >> level;                                               \
+                                                                       \
+    if (!this->CheckOut(name)) {                                       \
+      this->CheckPin(name)->SetLevel(level);                           \
+    } else {                                                           \
+      std::string error =                                              \
           "error: output cannot be set\n\t" + name + " cannot be set"; \
-      throw(error);                                                   \
-    }                                                                 \
-                                                                      \
-    continue;                                                         \
+      throw(error);                                                    \
+    }                                                                  \
+                                                                       \
+    continue;                                                          \
   }
 #define COMMAND_RESET(command)                         \
   if (command == "RESET") {                            \
