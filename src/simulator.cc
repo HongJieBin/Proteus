@@ -336,6 +336,10 @@ void Simulator::Load(std::string file) {
 
   fs.open(file);
 
+  if (!fs) {
+    throw(std::string("load: " + file + ": No such file or directory"));
+  }
+
   while (!fs.eof()) {
     std::string chunk;
 
