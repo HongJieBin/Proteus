@@ -1,16 +1,21 @@
+ECHO NAND_Test
 ADD NAND A B C
+
 ECHO Case_A=0_B=0
 SET A 0
 SET B 0
 SIM
+
 ECHO Case_A=1_B=0
 SET A 1
 SET B 0
 SIM
+
 ECHO Case_A=0_B=1
 SET A 0
 SET B 1
 SIM
+
 ECHO Case_A=1_B=1
 SET A 1
 SET B 1

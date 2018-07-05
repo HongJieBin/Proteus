@@ -1,3 +1,0 @@
-ECHO Loop_Error_Test
-ADD NOT A A
-SIM

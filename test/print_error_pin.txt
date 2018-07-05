@@ -1,0 +1,4 @@
+ECHO Print_Error_Pin_Test
+
+ECHO A_is_not_existed_and_we_attempt_to_print_A
+PRINT A

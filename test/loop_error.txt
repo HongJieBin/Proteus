@@ -1,0 +1,5 @@
+ECHO Loop_Error_Test
+ADD NOT A B
+ADD NOT B C
+ADD NOT C A
+SIM

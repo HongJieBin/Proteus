@@ -1,0 +1,5 @@
+ECHO Set_Error_Level_Test
+ADD NOT A B
+
+ECHO SET_A_2
+SET A 2
