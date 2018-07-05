@@ -19,6 +19,7 @@ void Pin::Print() const {
             << std::endl;
 }
 
+// 并运算
 int Pin::operator+(const Pin& other) const {
   if (this->GetLevel() || other.GetLevel()) {
     return HIGH;
@@ -27,6 +28,7 @@ int Pin::operator+(const Pin& other) const {
   return LOW;
 }
 
+// 交运算
 int Pin::operator*(const Pin& other) const {
   if (this->GetLevel() && other.GetLevel()) {
     return HIGH;
@@ -35,6 +37,7 @@ int Pin::operator*(const Pin& other) const {
   return LOW;
 }
 
+// 非运算
 int Pin::operator!() const {
   if (this->GetLevel()) {
     return LOW;
@@ -43,6 +46,7 @@ int Pin::operator!() const {
   return HIGH;
 }
 
+// 异或运算
 int Pin::operator^(const Pin& other) const {
   if ((this->GetLevel() == HIGH && other.GetLevel() == LOW) ||
       (this->GetLevel() == LOW && other.GetLevel() == HIGH)) {

@@ -24,10 +24,10 @@ class Pin {
 
   void Print() const;
 
-  int operator+(const Pin& other) const;
-  int operator*(const Pin& other) const;
-  int operator!() const;
-  int operator^(const Pin& other) const;
+  int operator+(const Pin& other) const;  // 并运算
+  int operator*(const Pin& other) const;  // 交运算
+  int operator!() const;                  // 非运算
+  int operator^(const Pin& other) const;  // 异或运算
 
  private:
   std::string name_;

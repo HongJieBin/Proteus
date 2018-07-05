@@ -24,22 +24,23 @@ class Simulator {
   int GetGatesAmount() const;
   int GetPinsAmount() const;
 
-  bool CheckLevel(Pin::level level) const;
-  bool CheckOut(std::string pin) const;
-  bool CheckSimpleLoop(std::string pin1, std::string pin2) const;
-  bool CheckLoop(std::string in, std::string out) const;
+  bool CheckLevel(Pin::level level) const;  // 检查非法电平
+  bool CheckOut(std::string pin) const;     // 检查输出节点
+  bool CheckSimpleLoop(std::string pin1,
+                       std::string pin2) const;           // 检查简单闭环
+  bool CheckLoop(std::string in, std::string out) const;  // 检查复杂闭环
 
-  Pin* SearchPin(std::string name) const;
-  Pin* AddPin(std::string name);
-  Pin* CheckPin(std::string name);
-  Gate* AddGate(std::string type);
+  Pin* SearchPin(std::string name) const;  // 搜索节点
+  Pin* AddPin(std::string name);           // 添加节点
+  Pin* CheckPin(std::string name);         // 获取节点
+  Gate* AddGate(std::string type);         // 添加门
 
-  void Info();
-  void Interact();
-  void Load(std::string file);
-  void Print() const;
+  void Info();                  // 程序信息
+  void Interact();              // 交互式
+  void Load(std::string file);  // 装载文件
+  void Print() const;           // 输出节点状态
   void Clear();
-  void Simulate();
+  void Simulate();  // 仿真
 
  private:
   std::vector<Gate*> gates_;

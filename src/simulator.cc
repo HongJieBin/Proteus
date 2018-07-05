@@ -154,10 +154,12 @@ int Simulator::GetGatesAmount() const { return this->gates_.size(); }
 
 int Simulator::GetPinsAmount() const { return this->pins_.size(); }
 
+// 检查非法电平
 bool Simulator::CheckLevel(Pin::level level) const {
   return level != 0 && level != 1;
 }
 
+// 检查输出节点
 bool Simulator::CheckOut(std::string pin) const {
   for (auto& iter : this->gates_) {
     if (!iter->GetOut()) {
@@ -172,6 +174,7 @@ bool Simulator::CheckOut(std::string pin) const {
   return false;
 }
 
+// 检查简单闭环
 bool Simulator::CheckSimpleLoop(std::string pin1, std::string pin2) const {
   return pin1 == pin2;
 }
@@ -186,6 +189,7 @@ Pin* Simulator::SearchPin(std::string name) const {
   return nullptr;
 }
 
+// 检查复杂闭环
 bool Simulator::CheckLoop(std::string in, std::string out) const {
   bool connected = false;
 
@@ -208,6 +212,7 @@ bool Simulator::CheckLoop(std::string in, std::string out) const {
   return connected;
 }
 
+// 添加节点
 Pin* Simulator::AddPin(std::string name) {
   Pin* pin = new Pin(name);
 
@@ -215,6 +220,7 @@ Pin* Simulator::AddPin(std::string name) {
   return pin;
 }
 
+// 获取节点
 Pin* Simulator::CheckPin(std::string name) {
   Pin* pin = this->SearchPin(name);
 
@@ -225,6 +231,7 @@ Pin* Simulator::CheckPin(std::string name) {
   return this->AddPin(name);
 }
 
+// 添加门
 Gate* Simulator::AddGate(std::string type) {
   Gate* gate = nullptr;
 
@@ -252,12 +259,14 @@ Gate* Simulator::AddGate(std::string type) {
   return gate;
 }
 
+// 程序信息
 void Simulator::Info() {
   std::cout << "Proteus - An application for simulating circuits" << std::endl;
   std::cout << "Created by Jiahonzheng" << std::endl;
   std::cout << "Enter 'help' to know more usage information" << std::endl;
 }
 
+// 交互式
 void Simulator::Interact() {
   std::string temp;
   std::string command;
@@ -331,6 +340,7 @@ void Simulator::Interact() {
   } while (1);
 }
 
+// 装载文件
 void Simulator::Load(std::string file) {
   std::ifstream fs;
 
@@ -362,6 +372,7 @@ void Simulator::Load(std::string file) {
   fs.close();
 }
 
+// 输出节点状态
 void Simulator::Print() const {
   if (!this->pins_.size()) {
     throw(std::string("No pins or gates to clear"));
@@ -385,6 +396,7 @@ void Simulator::Clear() {
   this->pins_.clear();
 }
 
+// 仿真
 void Simulator::Simulate() {
   for (auto& iter : this->gates_) {
     iter->Calculate();
