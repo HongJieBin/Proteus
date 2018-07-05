@@ -1,0 +1,5 @@
+ECHO Set_Out_Level_Test
+ADD NOT A B
+
+ECHO SET_OUT_1
+SET B 1
