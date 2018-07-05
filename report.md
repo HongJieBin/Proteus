@@ -20,9 +20,13 @@
 
 ## 设计思路
 
-### 代码架构
+### 封装
 
 `Proteus` 主要由 `Simulator` 、`Gate` 和 `Pin` 三部分构成，`Simulator` 负责对电路整体的仿真工作，`Gate` 为各类门电路的基类，`Pin` 为电路节点。
+
+我们将 `Pin` 封装至 `Gate` 内部，以提供节点连接功能。然后将 `Gate` 封装到 `Simulator` 内部，以提供门电路逻辑功能。最后，我们通过 `Simulator` 实现**节点连接**、**门电路搭建**、**仿真**等功能。
+
+### 继承与多态
 
 各类门电路对 `Gate` 的 `Calculate` 方法进行实现，然后在 `Simulator` 里通过基类指针调用不同的子类方法实现多态。
 
@@ -92,10 +96,6 @@ class Simulator {
   std::vector<Pin*> pins_;
 };
 ```
-
-### 代码风格
-
-使用了 `Google C++ Style` ，在开发过程中，严格遵守了类内变量以下划线结尾的规则，在审阅代码时，效率得到了提高。
 
 ### 运算符重载
 
@@ -238,6 +238,10 @@ void Simulator::Load(std::string file) {
 #define COMMAND_RESET(command)
 #define COMMAND_SIM(command)
 ```
+
+### 代码风格
+
+使用了 `Google C++ Style` ，在开发过程中，严格遵守了类内变量以下划线结尾的规则，在审阅代码时，效率得到了提高。
 
 ## 扩展
 
